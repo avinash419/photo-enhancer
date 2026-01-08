@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult, EnhancementConfig } from "../types.ts";
 
@@ -23,7 +22,11 @@ const getSupportedAspectRatio = (ratio: number): "1:1" | "4:3" | "3:4" | "16:9" 
 };
 
 export const analyzeImage = async (file: File): Promise<AnalysisResult> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+  // Access API key at runtime inside the function
+  const apiKey = (process.env as any).API_KEY;
+  if (!apiKey) throw new Error("AI Engine offline: API Key not detected in environment.");
+  
+  const ai = new GoogleGenAI({ apiKey });
   const base64Data = await fileToBase64(file);
 
   const response = await ai.models.generateContent({
@@ -66,7 +69,10 @@ export const enhanceImage = async (
   config: EnhancementConfig,
   aspectRatioValue: number = 1
 ): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+  const apiKey = (process.env as any).API_KEY;
+  if (!apiKey) throw new Error("AI Engine offline: API Key not detected in environment.");
+  
+  const ai = new GoogleGenAI({ apiKey });
   const base64Data = await fileToBase64(file);
   const targetRatio = getSupportedAspectRatio(aspectRatioValue);
 
