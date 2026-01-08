@@ -112,8 +112,9 @@ const App: React.FC = () => {
   const reset = () => {
     if (originalImage?.preview) URL.revokeObjectURL(originalImage.preview);
     if (enhancedPreview) {
-      // Small delay to ensure browser isn't using it
-      setTimeout(() => URL.revokeObjectURL(enhancedPreview), 100);
+      setTimeout(() => {
+         try { URL.revokeObjectURL(enhancedPreview); } catch(e) {}
+      }, 100);
     }
     setOriginalImage(null);
     setEnhancedPreview(null);
@@ -129,8 +130,6 @@ const App: React.FC = () => {
     img.src = enhancedPreview;
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      
-      // Calculate UHD dimensions: Max of original or 4096 (UHD), but capped for mobile stability
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       const MAX_SIDE = isMobile ? 3072 : 4096;
       
@@ -146,7 +145,6 @@ const App: React.FC = () => {
           w = MAX_SIDE * originalImage.aspectRatio;
         }
       } else if (w < 2048 && h < 2048) {
-        // Upscale small images to at least 2K for "UHD" feeling
         if (w > h) {
           w = 2560;
           h = 2560 / originalImage.aspectRatio;
@@ -202,7 +200,7 @@ const App: React.FC = () => {
             <Zap size={14} className="text-blue-400" /> Flash Engine Active
           </span>
           <div className="h-4 w-px bg-white/10" />
-          <a href="https://github.com" target="_blank" rel="noreferrer" className="text-white/40 hover:text-white transition-colors">
+          <a href="#" className="text-white/40 hover:text-white transition-colors">
             <Github size={18} />
           </a>
         </div>
@@ -315,4 +313,44 @@ const App: React.FC = () => {
               )}
               
               {error && (
-                <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-center gap
+                <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-center gap-3 text-red-400 text-sm">
+                   <AlertCircle size={20} />
+                   {error}
+                </div>
+              )}
+            </div>
+
+            <aside className="lg:col-span-4">
+              <ControlPanel 
+                config={config} 
+                onChange={setConfig} 
+                onEnhance={handleEnhance}
+                loading={stage === 'enhancing'}
+              />
+              
+              {analysis && (
+                <div className="mt-6 p-6 glass rounded-3xl space-y-4">
+                  <div className="flex items-center gap-2 text-white/50 text-[10px] font-bold uppercase tracking-widest">
+                    <Info size={14} className="text-blue-400" />
+                    Engine Diagnosis
+                  </div>
+                  <p className="text-sm text-white/70 leading-relaxed italic">
+                    "{analysis.summary}"
+                  </p>
+                </div>
+              )}
+            </aside>
+          </div>
+        )}
+      </main>
+
+      <footer className="py-12 border-t border-white/5 text-center">
+        <p className="text-[10px] text-white/20 uppercase tracking-[0.4em] font-bold">
+          Powered by Gemini 2.5 Flash &bull; Private & Secure
+        </p>
+      </footer>
+    </div>
+  );
+};
+
+export default App;

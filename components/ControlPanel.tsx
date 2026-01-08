@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { EnhancementConfig } from '../types';
+import { EnhancementConfig } from '../types.ts';
 import { Settings, ShieldCheck, Sparkles, Target, Eye } from 'lucide-react';
 
 interface Props {
