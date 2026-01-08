@@ -1,0 +1,5 @@
+{
+  "name": "Photo Enhance AI",
+  "description": "Professional AI-powered photo restoration tool. Focused on progressive super-resolution, identity protection, and zoom stability using Gemini 2.5 Flash.",
+  "requestFramePermissions": []
+}
