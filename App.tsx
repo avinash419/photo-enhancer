@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { Image as ImageIcon, Download, RefreshCw, ChevronLeft, Github, Info, AlertCircle, Sparkles, Crown, Zap } from 'lucide-react';
 import ImageUploader from './components/ImageUploader.tsx';
@@ -112,7 +111,10 @@ const App: React.FC = () => {
 
   const reset = () => {
     if (originalImage?.preview) URL.revokeObjectURL(originalImage.preview);
-    if (enhancedPreview) URL.revokeObjectURL(enhancedPreview);
+    if (enhancedPreview) {
+      // Small delay to ensure browser isn't using it
+      setTimeout(() => URL.revokeObjectURL(enhancedPreview), 100);
+    }
     setOriginalImage(null);
     setEnhancedPreview(null);
     setAnalysis(null);
@@ -128,15 +130,30 @@ const App: React.FC = () => {
     img.onload = () => {
       const canvas = document.createElement('canvas');
       
-      const targetShortSide = Math.max(originalImage.height, originalImage.width, 4096);
+      // Calculate UHD dimensions: Max of original or 4096 (UHD), but capped for mobile stability
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const MAX_SIDE = isMobile ? 3072 : 4096;
       
-      let w, h;
-      if (originalImage.aspectRatio > 1) {
-        w = targetShortSide;
-        h = targetShortSide / originalImage.aspectRatio;
-      } else {
-        h = targetShortSide;
-        w = targetShortSide * originalImage.aspectRatio;
+      let w = originalImage.width;
+      let h = originalImage.height;
+      
+      if (w > MAX_SIDE || h > MAX_SIDE) {
+        if (w > h) {
+          w = MAX_SIDE;
+          h = MAX_SIDE / originalImage.aspectRatio;
+        } else {
+          h = MAX_SIDE;
+          w = MAX_SIDE * originalImage.aspectRatio;
+        }
+      } else if (w < 2048 && h < 2048) {
+        // Upscale small images to at least 2K for "UHD" feeling
+        if (w > h) {
+          w = 2560;
+          h = 2560 / originalImage.aspectRatio;
+        } else {
+          h = 2560;
+          w = 2560 * originalImage.aspectRatio;
+        }
       }
       
       canvas.width = w;
@@ -155,7 +172,7 @@ const App: React.FC = () => {
             const sizeInMb = (blob.size / (1024 * 1024)).toFixed(1);
             link.download = `photo-enhance-ai-uhd-${sizeInMb}mb.png`;
             link.click();
-            setTimeout(() => URL.revokeObjectURL(url), 100);
+            setTimeout(() => URL.revokeObjectURL(url), 500);
           }
         }, 'image/png');
       }
@@ -185,7 +202,7 @@ const App: React.FC = () => {
             <Zap size={14} className="text-blue-400" /> Flash Engine Active
           </span>
           <div className="h-4 w-px bg-white/10" />
-          <a href="https://github.com" className="text-white/40 hover:text-white transition-colors">
+          <a href="https://github.com" target="_blank" rel="noreferrer" className="text-white/40 hover:text-white transition-colors">
             <Github size={18} />
           </a>
         </div>
@@ -298,65 +315,4 @@ const App: React.FC = () => {
               )}
               
               {error && (
-                <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-center gap-4 shadow-xl">
-                  <AlertCircle size={24} className="text-red-400 shrink-0" />
-                  <p className="text-red-400 text-sm font-medium">{error}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="lg:col-span-4 space-y-8">
-              <ControlPanel 
-                config={config} 
-                onChange={setConfig} 
-                onEnhance={handleEnhance} 
-                loading={stage === 'enhancing'}
-              />
-              
-              <div className="glass rounded-3xl p-8 shadow-2xl border-white/5">
-                 <div className="flex items-center justify-between mb-8">
-                   <div className="flex items-center gap-3 font-black text-xs uppercase tracking-widest text-white/80">
-                     <Info size={18} className="text-blue-400" />
-                     Engine Report
-                   </div>
-                   <span className="text-[9px] bg-green-500/20 text-green-400 px-3 py-1 rounded-full font-black tracking-widest uppercase">Verified</span>
-                 </div>
-                 <p className="text-sm text-white/50 leading-relaxed font-medium italic">
-                   "{analysis?.summary || 'Scanning complete. Applying progressive pixel reconstruction with zoom-stability safeguards.'}"
-                 </p>
-                 <div className="mt-8 pt-8 border-t border-white/5 space-y-5">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                      <span className="text-white/20">Method</span>
-                      <span className="text-white/80">Red-Eye SR</span>
-                    </div>
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                      <span className="text-white/20">Identity</span>
-                      <span className="text-blue-400">Verified Lock</span>
-                    </div>
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                      <span className="text-white/20">Stability</span>
-                      <span className="text-green-400">98.4% Smooth</span>
-                    </div>
-                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-
-      <footer className="py-20 px-8 border-t border-white/5 text-white/20 flex flex-col md:flex-row items-center justify-between gap-10 max-w-7xl mx-auto">
-        <div className="flex flex-col items-center md:items-start gap-2">
-          <p className="text-xs font-bold uppercase tracking-widest text-white/40">© 2024 PhotoEnhance AI Studio</p>
-          <p className="text-[10px] font-medium tracking-wide">Ready for Production Deployment</p>
-        </div>
-        <div className="flex gap-8 items-center">
-           <a href="#" className="hover:text-white transition-colors text-[10px] font-black uppercase tracking-[0.2em]">Terms</a>
-           <a href="#" className="hover:text-white transition-colors text-[10px] font-black uppercase tracking-[0.2em]">Privacy</a>
-           <a href="https://github.com" className="hover:text-white transition-colors"><Github size={20} /></a>
-        </div>
-      </footer>
-    </div>
-  );
-};
-
-export default App;
+                <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-center gap

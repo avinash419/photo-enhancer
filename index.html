@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
-      // Global shim for process.env to prevent ReferenceErrors during execution
+      // Global shim for process.env
       window.process = window.process || { env: {} };
       if (!window.process.env) window.process.env = {};
     </script>
@@ -50,6 +50,11 @@
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
       }
+      /* Custom scrollbar for better aesthetics */
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #050505; }
+      ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: #333; }
     </style>
     <script type="importmap">
     {

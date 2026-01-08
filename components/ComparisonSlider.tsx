@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useLayoutEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect, useCallback } from 'react';
 import { ZoomIn, ZoomOut, Maximize, Move } from 'lucide-react';
 
 interface Props {
@@ -27,14 +26,13 @@ const ComparisonSlider: React.FC<Props> = ({ before, after }) => {
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
-  const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (isPanning) return; 
-    if (!containerRef.current) return;
+  const handleMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    if (isPanning || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const position = ((x - rect.left) / rect.width) * 100;
     setSliderPosition(Math.max(0, Math.min(100, position)));
-  };
+  }, [isPanning]);
 
   const handleZoom = (delta: number) => {
     setZoom(prev => {
@@ -52,7 +50,7 @@ const ComparisonSlider: React.FC<Props> = ({ before, after }) => {
     dragStart.current = { x: x - offset.x, y: y - offset.y };
   };
 
-  const onPanning = (e: React.MouseEvent | React.TouchEvent) => {
+  const onPanning = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!isPanning) return;
     const x = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const y = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
@@ -60,7 +58,7 @@ const ComparisonSlider: React.FC<Props> = ({ before, after }) => {
       x: x - dragStart.current.x,
       y: y - dragStart.current.y
     });
-  };
+  }, [isPanning]);
 
   const stopPanning = () => setIsPanning(false);
 
@@ -105,11 +103,11 @@ const ComparisonSlider: React.FC<Props> = ({ before, after }) => {
         onTouchEnd={stopPanning}
       >
         <div 
-          className="w-full h-full"
+          className="w-full h-full will-change-transform"
           style={{ 
             transform: `scale(${zoom}) translate(${offset.x / zoom}px, ${offset.y / zoom}px)`,
             transformOrigin: 'center',
-            transition: isPanning ? 'none' : 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)'
+            transition: 'none' // REMOVED transition to fix LAG
           }}
         >
           <img 
@@ -119,8 +117,11 @@ const ComparisonSlider: React.FC<Props> = ({ before, after }) => {
           />
 
           <div 
-            className="absolute inset-0 h-full overflow-hidden pointer-events-none transition-[width] duration-75"
-            style={{ width: `${sliderPosition}%` }}
+            className="absolute inset-0 h-full overflow-hidden pointer-events-none"
+            style={{ 
+              width: `${sliderPosition}%`,
+              transition: 'none' // REMOVED transition to fix LAG
+            }}
           >
             <img 
               src={after} 
@@ -131,8 +132,11 @@ const ComparisonSlider: React.FC<Props> = ({ before, after }) => {
           </div>
 
           <div 
-            className="absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_30px_rgba(0,0,0,1)] z-10 pointer-events-none transition-transform"
-            style={{ left: `${sliderPosition}%` }}
+            className="absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_30px_rgba(0,0,0,1)] z-10 pointer-events-none"
+            style={{ 
+              left: `${sliderPosition}%`,
+              transition: 'none' // REMOVED transition to fix LAG
+            }}
           >
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-[0_0_20px_rgba(0,0,0,0.5)] border-4 border-white/30 backdrop-blur-sm">
               <div className="flex gap-1">
